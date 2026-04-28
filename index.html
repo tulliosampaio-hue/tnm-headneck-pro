@@ -3,86 +3,304 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TNM PRO</title>
-
+<title>TNM Cabeça e Pescoço PRO</title>
 <style>
-body{font-family:Arial;background:#eef2f6;padding:15px}
-.card{background:#fff;padding:15px;border-radius:12px;margin-bottom:10px}
-select,button{width:100%;padding:10px;margin-top:5px;border-radius:8px}
-.result{background:#d9edf7;padding:15px;border-radius:10px}
-.bad{color:red;font-weight:bold}
+body{font-family:Arial;background:#eef2f6;padding:16px;color:#111}
+h1{font-size:28px}
+.card{background:#fff;padding:16px;border-radius:16px;margin-bottom:12px}
+select,button{width:100%;padding:12px;margin-top:6px;border-radius:10px;border:1px solid #ccc;font-size:16px}
+button{background:#0b4f7a;color:white;font-weight:bold}
+.result{background:#d9edf7;padding:16px;border-radius:12px}
+.bad{color:#b00020;font-weight:bold}
+.small{font-size:13px;color:#444}
 </style>
 </head>
 
 <body>
 
-<h2>TNM Cabeça e Pescoço</h2>
+<h1>TNM Cabeça e Pescoço PRO</h1>
 
 <div class="card">
+<label>Sítio tumoral</label>
+<select id="site" onchange="updateOptions()">
+<option value="oral">Cavidade oral / boca</option>
+<option value="orofaringe_hpv">Orofaringe HPV+ / p16+</option>
+<option value="orofaringe_neg">Orofaringe HPV− / p16−</option>
+<option value="hipofaringe">Hipofaringe / faringe</option>
+<option value="glotica">Laringe glótica</option>
+<option value="supraglotica">Laringe supraglótica</option>
+<option value="tireoide">Tireoide</option>
+<option value="melanoma">Melanoma cutâneo</option>
+<option value="pele">Câncer de pele não melanoma</option>
+</select>
 
 <label>T</label>
-<select id="T">
-<option>T1</option>
-<option>T2</option>
-<option>T3</option>
-<option>T4</option>
-</select>
+<select id="T"></select>
 
 <label>N</label>
-<select id="N">
-<option>N0</option>
-<option>N1</option>
-<option>N2</option>
-<option>N3</option>
-</select>
+<select id="N"></select>
 
 <label>M</label>
 <select id="M">
-<option>M0</option>
-<option>M1</option>
+<option value="M0">M0</option>
+<option value="M1">M1</option>
+</select>
+
+<label>ENE</label>
+<select id="ENE">
+<option value="nao">Não</option>
+<option value="sim">Sim</option>
+</select>
+
+<label>Margem</label>
+<select id="margem">
+<option value="livre">Livre</option>
+<option value="proxima">Próxima</option>
+<option value="positiva">Positiva</option>
 </select>
 
 <button onclick="calc()">Calcular</button>
-
 </div>
 
 <div class="result" id="res"></div>
 
 <script>
+const dados = {
+oral:{
+nome:"CEC de cavidade oral / boca",
+T:{
+"T1":"≤ 2 cm e DOI ≤ 5 mm",
+"T2":"≤ 2 cm com DOI 5–10 mm OU 2–4 cm com DOI ≤ 10 mm",
+"T3":"> 4 cm OU DOI > 10 mm",
+"T4a":"Invade cortical óssea, seio maxilar, pele ou musculatura profunda",
+"T4b":"Invade espaço mastigador, placas pterigoides, base do crânio ou carótida"
+},
+N:{
+"N0":"Sem linfonodo regional",
+"N1":"Único ipsilateral ≤ 3 cm, sem ENE",
+"N2":"Único 3–6 cm, múltiplos ipsilaterais ou bilateral/contralateral ≤ 6 cm",
+"N3":"> 6 cm ou ENE positivo"
+}
+},
+
+orofaringe_hpv:{
+nome:"CEC de orofaringe HPV+ / p16+",
+T:{
+"T0":"Primário oculto",
+"T1":"≤ 2 cm",
+"T2":"> 2 cm até 4 cm",
+"T3":"> 4 cm ou extensão à superfície lingual da epiglote",
+"T4":"Invasão de laringe, musculatura extrínseca da língua, palato duro, mandíbula ou além"
+},
+N:{
+"N0":"Sem linfonodo",
+"N1":"Linfonodos ipsilaterais, nenhum > 6 cm",
+"N2":"Linfonodos bilaterais ou contralaterais, nenhum > 6 cm",
+"N3":"Linfonodo > 6 cm"
+}
+},
+
+orofaringe_neg:{
+nome:"CEC de orofaringe HPV− / p16−",
+T:{
+"T1":"≤ 2 cm",
+"T2":"> 2 cm até 4 cm",
+"T3":"> 4 cm ou superfície lingual da epiglote",
+"T4a":"Invade laringe, músculo extrínseco da língua, palato duro ou mandíbula",
+"T4b":"Invade base do crânio, carótida ou espaço profundo"
+},
+N:{
+"N0":"Sem linfonodo",
+"N1":"Único ipsilateral ≤ 3 cm",
+"N2":"Linfonodos até 6 cm",
+"N3":"> 6 cm ou ENE positivo"
+}
+},
+
+hipofaringe:{
+nome:"CEC de hipofaringe / faringe",
+T:{
+"T1":"Limitado a um subsítio e/ou ≤ 2 cm",
+"T2":"Mais de um subsítio ou > 2–4 cm, sem fixação laríngea",
+"T3":"> 4 cm ou fixação da hemilaringe",
+"T4a":"Invade cartilagem tireoide/cricoide, hioide, tireoide, esôfago ou partes moles",
+"T4b":"Invade fáscia pré-vertebral, carótida ou mediastino"
+},
+N:{
+"N0":"Sem linfonodo",
+"N1":"Único ipsilateral ≤ 3 cm",
+"N2":"Linfonodos até 6 cm",
+"N3":"> 6 cm ou ENE positivo"
+}
+},
+
+glotica:{
+nome:"CEC de laringe glótica",
+T:{
+"T1":"Limitado às cordas vocais, mobilidade normal",
+"T2":"Extensão supra/subglótica ou mobilidade reduzida",
+"T3":"Fixação da corda vocal ou invasão do espaço paraglótico",
+"T4a":"Invade através da cartilagem tireoide ou tecidos extralaríngeos",
+"T4b":"Invade pré-vertebral, mediastino ou carótida"
+},
+N:{
+"N0":"Sem linfonodo",
+"N1":"Único ipsilateral ≤ 3 cm",
+"N2":"Linfonodos até 6 cm",
+"N3":"> 6 cm ou ENE positivo"
+}
+},
+
+supraglotica:{
+nome:"CEC de laringe supraglótica",
+T:{
+"T1":"Um subsítio supraglótico, mobilidade normal",
+"T2":"Mais de um subsítio ou região adjacente, mobilidade preservada",
+"T3":"Fixação de corda vocal ou invasão pré-epiglótica/paraglótica",
+"T4a":"Invade cartilagem tireoide ou tecidos extralaríngeos",
+"T4b":"Invade pré-vertebral, mediastino ou carótida"
+},
+N:{
+"N0":"Sem linfonodo",
+"N1":"Único ipsilateral ≤ 3 cm",
+"N2":"Linfonodos até 6 cm",
+"N3":"> 6 cm ou ENE positivo"
+}
+},
+
+tireoide:{
+nome:"Tumor de tireoide",
+T:{
+"T1":"≤ 2 cm limitado à tireoide",
+"T2":"> 2 cm até 4 cm limitado à tireoide",
+"T3":"> 4 cm ou extensão extratireoidiana mínima",
+"T4a":"Extensão macroscópica para laringe, traqueia, esôfago ou nervo recorrente",
+"T4b":"Invade fáscia pré-vertebral, carótida ou vasos mediastinais"
+},
+N:{
+"N0":"Sem linfonodo",
+"N1a":"Linfonodos centrais VI/VII",
+"N1b":"Linfonodos laterais cervicais ou mediastinais superiores"
+}
+},
+
+melanoma:{
+nome:"Melanoma cutâneo",
+T:{
+"T1":"Breslow ≤ 1,0 mm",
+"T2":"Breslow > 1,0 até 2,0 mm",
+"T3":"Breslow > 2,0 até 4,0 mm",
+"T4":"Breslow > 4,0 mm"
+},
+N:{
+"N0":"Sem linfonodo",
+"N1":"1 linfonodo ou doença satélite/in-transit",
+"N2":"2–3 linfonodos",
+"N3":"≥ 4 linfonodos ou conglomerado linfonodal"
+}
+},
+
+pele:{
+nome:"Câncer de pele não melanoma",
+T:{
+"T1":"≤ 2 cm sem critérios de alto risco",
+"T2":"> 2–4 cm ou alto risco local",
+"T3":"> 4 cm, invasão profunda, perineural ou erosão óssea menor",
+"T4":"Invasão óssea extensa, base do crânio ou forame"
+},
+N:{
+"N0":"Sem linfonodo",
+"N1":"Único ipsilateral ≤ 3 cm",
+"N2":"Múltiplos, contralateral/bilateral ou 3–6 cm",
+"N3":"> 6 cm ou ENE positivo"
+}
+}
+};
+
+function updateOptions(){
+let site=document.getElementById("site").value;
+let T=document.getElementById("T");
+let N=document.getElementById("N");
+T.innerHTML="";
+N.innerHTML="";
+Object.keys(dados[site].T).forEach(k=>{
+T.innerHTML += `<option value="${k}">${k} — ${dados[site].T[k]}</option>`;
+});
+Object.keys(dados[site].N).forEach(k=>{
+N.innerHTML += `<option value="${k}">${k} — ${dados[site].N[k]}</option>`;
+});
+}
 
 function calc(){
-let T=document.getElementById("T").value
-let N=document.getElementById("N").value
-let M=document.getElementById("M").value
+let site=document.getElementById("site").value;
+let T=document.getElementById("T").value;
+let N=document.getElementById("N").value;
+let M=document.getElementById("M").value;
+let ENE=document.getElementById("ENE").value;
+let margem=document.getElementById("margem").value;
 
-let estagio="I"
-let conduta=""
+let estagio="I";
 
-if(M=="M1"){
-estagio="IV"
-conduta="Doença metastática → terapia sistêmica"
+if(M==="M1"){
+estagio="IVC";
 }
-else if(T=="T4"||N=="N3"){
-estagio="IV"
-conduta="Doença avançada → cirurgia + QT/RT ou QT/RT definitiva"
+else if(site==="orofaringe_hpv"){
+if(T==="T4" || N==="N3") estagio="III";
+else if(T==="T3" || N==="N2") estagio="II";
+else estagio="I";
 }
-else if(T=="T3"||N=="N2"){
-estagio="III"
-conduta="Cirurgia + adjuvância ou quimiorradioterapia"
+else if(site==="melanoma"){
+if(N!=="N0") estagio="III";
+else if(T==="T3" || T==="T4") estagio="II";
+else estagio="I";
 }
-else if(T=="T2"){
-estagio="II"
-conduta="Cirurgia ou radioterapia"
+else if(site==="tireoide"){
+if(T==="T4b") estagio="IVA";
+else if(T==="T4a") estagio="III";
+else if(T==="T3" || N!=="N0") estagio="II";
+else estagio="I";
 }
 else{
-estagio="I"
-conduta="Tratamento local"
+if(T==="T4b" || N==="N3") estagio="IVB";
+else if(T==="T4a" || T==="T4" || N==="N2") estagio="IVA";
+else if(T==="T3" || N==="N1") estagio="III";
+else if(T==="T2") estagio="II";
+else estagio="I";
+}
+
+let conduta="";
+if(estagio==="I" || estagio==="II"){
+conduta="Tratamento local: cirurgia ou radioterapia conforme sítio, função e ressecabilidade.";
+}
+else if(estagio==="III" || estagio==="IVA"){
+conduta="Doença localmente avançada: cirurgia + adjuvância ou QT/RT definitiva conforme sítio e objetivo funcional.";
+}
+else if(estagio==="IVB"){
+conduta="Doença muito avançada: avaliar ressecabilidade; QT/RT definitiva ou terapia sistêmica se irressecável.";
+}
+else{
+conduta="Doença metastática: terapia sistêmica / imunoterapia ± quimioterapia e cuidados paliativos integrados.";
+}
+
+let alerta="";
+if(ENE==="sim" || margem==="positiva"){
+alerta="<p class='bad'>⚠ Alto risco: ENE positivo ou margem positiva → considerar QT/RT adjuvante.</p>";
+}
+else if(margem==="proxima"){
+alerta="<p class='bad'>⚠ Margem próxima: considerar radioterapia adjuvante conforme contexto.</p>";
 }
 
 document.getElementById("res").innerHTML =
-"<b>Estágio:</b> "+estagio+"<br><br><b>Conduta:</b><br>"+conduta
+"<h3>"+dados[site].nome+"</h3>"+
+"<b>Estadiamento:</b> "+T+" "+N+" "+M+" → <b>Estágio "+estagio+"</b><br><br>"+
+"<b>O que caracteriza o T:</b><br>"+dados[site].T[T]+"<br><br>"+
+"<b>O que caracteriza o N:</b><br>"+dados[site].N[N]+"<br><br>"+
+"<b>Conduta sugerida:</b><br>"+conduta+
+alerta+
+"<p class='small'>Ferramenta de apoio. Confirmar com AJCC/NCCN oficiais, anatomopatológico, imagem, performance status e tumor board.</p>";
 }
 
+updateOptions();
 </script>
 
 </body>
