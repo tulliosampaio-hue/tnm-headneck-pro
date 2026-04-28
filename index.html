@@ -1,9 +1,89 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-BR">
 <head>
-<title>OK</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TNM PRO</title>
+
+<style>
+body{font-family:Arial;background:#eef2f6;padding:15px}
+.card{background:#fff;padding:15px;border-radius:12px;margin-bottom:10px}
+select,button{width:100%;padding:10px;margin-top:5px;border-radius:8px}
+.result{background:#d9edf7;padding:15px;border-radius:10px}
+.bad{color:red;font-weight:bold}
+</style>
 </head>
+
 <body>
-<h1>Funcionou</h1>
+
+<h2>TNM Cabeça e Pescoço</h2>
+
+<div class="card">
+
+<label>T</label>
+<select id="T">
+<option>T1</option>
+<option>T2</option>
+<option>T3</option>
+<option>T4</option>
+</select>
+
+<label>N</label>
+<select id="N">
+<option>N0</option>
+<option>N1</option>
+<option>N2</option>
+<option>N3</option>
+</select>
+
+<label>M</label>
+<select id="M">
+<option>M0</option>
+<option>M1</option>
+</select>
+
+<button onclick="calc()">Calcular</button>
+
+</div>
+
+<div class="result" id="res"></div>
+
+<script>
+
+function calc(){
+let T=document.getElementById("T").value
+let N=document.getElementById("N").value
+let M=document.getElementById("M").value
+
+let estagio="I"
+let conduta=""
+
+if(M=="M1"){
+estagio="IV"
+conduta="Doença metastática → terapia sistêmica"
+}
+else if(T=="T4"||N=="N3"){
+estagio="IV"
+conduta="Doença avançada → cirurgia + QT/RT ou QT/RT definitiva"
+}
+else if(T=="T3"||N=="N2"){
+estagio="III"
+conduta="Cirurgia + adjuvância ou quimiorradioterapia"
+}
+else if(T=="T2"){
+estagio="II"
+conduta="Cirurgia ou radioterapia"
+}
+else{
+estagio="I"
+conduta="Tratamento local"
+}
+
+document.getElementById("res").innerHTML =
+"<b>Estágio:</b> "+estagio+"<br><br><b>Conduta:</b><br>"+conduta
+}
+
+</script>
+
 </body>
 </html>
