@@ -10,7 +10,6 @@ body{font-family:Arial;background:#eef2f6;padding:15px}
 .card{background:#fff;padding:15px;border-radius:12px;margin-bottom:12px}
 select,button{width:100%;padding:10px;margin-top:6px;border-radius:8px}
 .result{background:#d9edf7;padding:15px;border-radius:10px}
-h2{margin-bottom:5px}
 .small{font-size:13px;color:#444}
 .bad{color:#b00020;font-weight:bold}
 </style>
@@ -24,9 +23,19 @@ h2{margin-bottom:5px}
 <label>Sítio tumoral</label>
 <select id="site" onchange="updateOptions()">
 <option value="oral">Cavidade oral</option>
-<option value="orofaringe">Orofaringe HPV−</option>
-<option value="laringe">Laringe</option>
+<option value="orofaringe_hpv">Orofaringe HPV+</option>
+<option value="orofaringe_neg">Orofaringe HPV−</option>
+<option value="hipofaringe">Hipofaringe</option>
+<option value="glotica">Laringe glótica</option>
+<option value="supraglotica">Laringe supraglótica</option>
 <option value="tireoide">Tireoide</option>
+</select>
+
+<label>Subtipo (tireoide)</label>
+<select id="subtipo">
+<option value="dif">Papilífero/Folicular</option>
+<option value="med">Medular</option>
+<option value="ana">Anaplásico</option>
 </select>
 
 <label>T</label>
@@ -55,6 +64,8 @@ h2{margin-bottom:5px}
 </select>
 
 <button onclick="calc()">Calcular</button>
+<button onclick="copiar()">Copiar para prontuário</button>
+
 </div>
 
 <div class="result" id="res"></div>
@@ -65,140 +76,99 @@ const dados = {
 
 oral:{
 nome:"CEC Cavidade Oral",
-T:{
-"T1":"≤2 cm e DOI ≤5mm",
-"T2":"≤4 cm ou DOI até 10mm",
-"T3":">4 cm ou DOI >10mm",
-"T4a":"Invasão de estruturas adjacentes (osso, pele)",
-"T4b":"Base do crânio ou carótida"
-},
-N:{
-"N0":"Sem linfonodo",
-"N1":"Único ≤3 cm",
-"N2":"Múltiplos ou até 6 cm",
-"N3":">6 cm ou ENE"
-}
+T:{T1:"≤2 cm",T2:"≤4 cm",T3:">4 cm",T4:"Invasivo"},
+N:{N0:"Sem linfonodo",N1:"≤3 cm",N2:"Até 6 cm",N3:">6 cm"}
 },
 
-orofaringe:{
+orofaringe_hpv:{
+nome:"Orofaringe HPV+",
+T:{T1:"≤2 cm",T2:"≤4 cm",T3:">4 cm",T4:"Invasivo"},
+N:{N0:"Sem linfonodo",N1:"Ipsilateral",N2:"Bilateral",N3:">6 cm"}
+},
+
+orofaringe_neg:{
 nome:"Orofaringe HPV−",
-T:{
-"T1":"≤2 cm",
-"T2":"≤4 cm",
-"T3":">4 cm",
-"T4":"Invasão profunda"
-},
-N:{
-"N0":"Sem linfonodo",
-"N1":"≤3 cm",
-"N2":"Até 6 cm",
-"N3":">6 cm ou ENE"
-}
+T:{T1:"≤2 cm",T2:"≤4 cm",T3:">4 cm",T4:"Invasivo"},
+N:{N0:"Sem linfonodo",N1:"≤3 cm",N2:"Até 6 cm",N3:">6 cm"}
 },
 
-laringe:{
-nome:"Laringe",
-T:{
-"T1":"Limitado",
-"T2":"Extensão local",
-"T3":"Fixação",
-"T4":"Invasão extensa"
+hipofaringe:{
+nome:"Hipofaringe",
+T:{T1:"Pequeno",T2:"Local",T3:"Fixação",T4:"Extenso"},
+N:{N0:"Sem linfonodo",N1:"≤3 cm",N2:"Até 6 cm",N3:">6 cm"}
 },
-N:{
-"N0":"Sem linfonodo",
-"N1":"≤3 cm",
-"N2":"Até 6 cm",
-"N3":">6 cm"
-}
+
+glotica:{
+nome:"Laringe Glótica",
+T:{T1:"Limitado",T2:"Extensão",T3:"Fixação",T4:"Invasivo"},
+N:{N0:"Sem linfonodo",N1:"≤3 cm",N2:"Até 6 cm",N3:">6 cm"}
+},
+
+supraglotica:{
+nome:"Laringe Supraglótica",
+T:{T1:"Local",T2:"Extensão",T3:"Fixação",T4:"Invasivo"},
+N:{N0:"Sem linfonodo",N1:"≤3 cm",N2:"Até 6 cm",N3:">6 cm"}
 },
 
 tireoide:{
-nome:"Tireoide (ATA atualizado)",
-T:{
-"T1":"≤2 cm",
-"T2":"2–4 cm",
-"T3":">4 cm",
-"T4":"Extensão extratireoidiana"
-},
-N:{
-"N0":"Sem linfonodo",
-"N1a":"Central",
-"N1b":"Lateral"
-}
+nome:"Tireoide",
+T:{T1:"≤2 cm",T2:"2–4 cm",T3:">4 cm",T4:"Extenso"},
+N:{N0:"Sem linfonodo",N1a:"Central",N1b:"Lateral"}
 }
 
 };
 
 function updateOptions(){
-let s=document.getElementById("site").value;
-let T=document.getElementById("T");
-let N=document.getElementById("N");
-
+let s=site.value;
 T.innerHTML="";
 N.innerHTML="";
-
-for(let t in dados[s].T){
-T.innerHTML+=`<option value="${t}">${t} - ${dados[s].T[t]}</option>`;
-}
-
-for(let n in dados[s].N){
-N.innerHTML+=`<option value="${n}">${n} - ${dados[s].N[n]}</option>`;
-}
+for(let t in dados[s].T){T.innerHTML+=`<option>${t}</option>`}
+for(let n in dados[s].N){N.innerHTML+=`<option>${n}</option>`}
 }
 
 function calc(){
 
-let site=document.getElementById("site").value;
-let T=document.getElementById("T").value;
-let N=document.getElementById("N").value;
-let M=document.getElementById("M").value;
-let ENE=document.getElementById("ENE").value;
-let margem=document.getElementById("margem").value;
+let s=site.value;
+let t=T.value;
+let n=N.value;
+let m=M.value;
+let subt=subtipo.value;
 
 let estagio="I";
 
-if(M==="M1"){
-estagio="IV";
+if(m==="M1"){estagio="IV"}
+else if(s==="orofaringe_hpv"){
+if(t==="T4"||n==="N3") estagio="III"
+else if(t==="T3"||n==="N2") estagio="II"
 }
-else if(T==="T4"||N==="N3"){
-estagio="IV";
-}
-else if(T==="T3"||N==="N2"){
-estagio="III";
-}
-else if(T==="T2"){
-estagio="II";
+else{
+if(t==="T4"||n==="N3") estagio="IV"
+else if(t==="T3"||n==="N2") estagio="III"
+else if(t==="T2") estagio="II"
 }
 
 let conduta="";
 
-if(site==="tireoide"){
-conduta="ATA: estratificar risco. Baixo risco → lobectomia. Intermediário → total ± radioiodo. Alto risco → total + radioiodo.";
-}
-else if(estagio==="I"||estagio==="II"){
-conduta="Tratamento local: cirurgia ou radioterapia.";
-}
-else if(estagio==="III"){
-conduta="Cirurgia + adjuvância ou QT/RT.";
+if(s==="tireoide"){
+if(subt==="dif") conduta="ATA: cirurgia ± radioiodo conforme risco"
+if(subt==="med") conduta="Total + esvaziamento central"
+if(subt==="ana") conduta="NGS + terapia alvo"
 }
 else{
-conduta="Doença avançada: QT/RT ou tratamento sistêmico.";
+if(estagio==="I"||estagio==="II") conduta="Cirurgia ou RT"
+else if(estagio==="III") conduta="Cirurgia + adjuvância"
+else conduta="QT/RT ou sistêmico"
 }
 
-let alerta="";
-if(ENE==="sim"||margem==="positiva"){
-alerta="<br><span class='bad'>⚠ Alto risco → QT/RT obrigatória</span>";
-}
-
-document.getElementById("res").innerHTML=
-"<b>"+dados[site].nome+"</b><br><br>"+
+res.innerHTML=
+"<b>"+dados[s].nome+"</b><br><br>"+
 "<b>Estágio:</b> "+estagio+"<br><br>"+
-"<b>T:</b> "+dados[site].T[T]+"<br>"+
-"<b>N:</b> "+dados[site].N[N]+"<br><br>"+
-"<b>Conduta:</b><br>"+conduta+
-alerta+
-"<p class='small'>Base: AJCC + NCCN + ATA (atualizações recentes). Uso como apoio clínico.</p>";
+"<b>Conduta:</b><br>"+conduta
+}
 
+function copiar(){
+navigator.clipboard.writeText(res.innerText)
+alert("Copiado!")
 }
 
 updateOptions();
