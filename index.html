@@ -3,15 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TNM H&N PRO</title>
+<title>TNM Cabeça e Pescoço PRO</title>
 
 <style>
 body{font-family:Arial;background:#eef2f6;padding:15px}
 .card{background:#fff;padding:15px;border-radius:12px;margin-bottom:12px}
 select,button{width:100%;padding:10px;margin-top:6px;border-radius:8px}
-.result{background:#d9edf7;padding:15px;border-radius:10px}
+.result{background:#d9edf7;padding:15px;border-radius:10px;margin-top:10px}
 .small{font-size:13px;color:#444}
 .bad{color:#b00020;font-weight:bold}
+h2{margin-bottom:10px}
 </style>
 </head>
 
@@ -20,6 +21,7 @@ select,button{width:100%;padding:10px;margin-top:6px;border-radius:8px}
 <h2>TNM Cabeça e Pescoço PRO</h2>
 
 <div class="card">
+
 <label>Sítio tumoral</label>
 <select id="site" onchange="updateOptions()">
 <option value="oral">Cavidade oral</option>
@@ -66,112 +68,154 @@ select,button{width:100%;padding:10px;margin-top:6px;border-radius:8px}
 <button onclick="calc()">Calcular</button>
 <button onclick="copiar()">Copiar para prontuário</button>
 
-</div>
-
 <div class="result" id="res"></div>
 
+</div>
+
 <script>
+
+function el(id){return document.getElementById(id);}
 
 const dados = {
 
 oral:{
 nome:"CEC Cavidade Oral",
-T:{T1:"≤2 cm",T2:"≤4 cm",T3:">4 cm",T4:"Invasivo"},
-N:{N0:"Sem linfonodo",N1:"≤3 cm",N2:"Até 6 cm",N3:">6 cm"}
+T:{T1:"≤2 cm e DOI ≤5 mm",T2:"2–4 cm ou DOI 5–10 mm",T3:">4 cm ou DOI >10 mm",T4:"Invasão local avançada"},
+N:{N0:"Sem linfonodo",N1:"Único ≤3 cm",N2:"Múltiplos ou até 6 cm",N3:">6 cm ou ENE"}
 },
 
 orofaringe_hpv:{
 nome:"Orofaringe HPV+",
-T:{T1:"≤2 cm",T2:"≤4 cm",T3:">4 cm",T4:"Invasivo"},
-N:{N0:"Sem linfonodo",N1:"Ipsilateral",N2:"Bilateral",N3:">6 cm"}
+T:{T1:"≤2 cm",T2:"2–4 cm",T3:">4 cm",T4:"Invasão profunda"},
+N:{N0:"Sem linfonodo",N1:"Ipsilateral",N2:"Bilateral/contralateral",N3:">6 cm"}
 },
 
 orofaringe_neg:{
 nome:"Orofaringe HPV−",
-T:{T1:"≤2 cm",T2:"≤4 cm",T3:">4 cm",T4:"Invasivo"},
-N:{N0:"Sem linfonodo",N1:"≤3 cm",N2:"Até 6 cm",N3:">6 cm"}
+T:{T1:"≤2 cm",T2:"2–4 cm",T3:">4 cm",T4:"Invasão profunda"},
+N:{N0:"Sem linfonodo",N1:"≤3 cm",N2:"Até 6 cm",N3:">6 cm ou ENE"}
 },
 
 hipofaringe:{
 nome:"Hipofaringe",
-T:{T1:"Pequeno",T2:"Local",T3:"Fixação",T4:"Extenso"},
-N:{N0:"Sem linfonodo",N1:"≤3 cm",N2:"Até 6 cm",N3:">6 cm"}
+T:{T1:"Limitado a um subsítio",T2:"Mais de um subsítio ou 2–4 cm",T3:">4 cm ou fixação",T4:"Invasão extensa"},
+N:{N0:"Sem linfonodo",N1:"≤3 cm",N2:"Até 6 cm",N3:">6 cm ou ENE"}
 },
 
 glotica:{
 nome:"Laringe Glótica",
-T:{T1:"Limitado",T2:"Extensão",T3:"Fixação",T4:"Invasivo"},
+T:{T1:"Limitado à corda vocal",T2:"Extensão supra/subglótica",T3:"Fixação da corda vocal",T4:"Invasão extralaríngea"},
 N:{N0:"Sem linfonodo",N1:"≤3 cm",N2:"Até 6 cm",N3:">6 cm"}
 },
 
 supraglotica:{
 nome:"Laringe Supraglótica",
-T:{T1:"Local",T2:"Extensão",T3:"Fixação",T4:"Invasivo"},
+T:{T1:"Um subsítio",T2:"Mais de um subsítio",T3:"Fixação/invasão pré-epiglótica",T4:"Invasão extralaríngea"},
 N:{N0:"Sem linfonodo",N1:"≤3 cm",N2:"Até 6 cm",N3:">6 cm"}
 },
 
 tireoide:{
 nome:"Tireoide",
-T:{T1:"≤2 cm",T2:"2–4 cm",T3:">4 cm",T4:"Extenso"},
+T:{T1:"≤2 cm",T2:"2–4 cm",T3:">4 cm ou extensão mínima",T4:"Extensão extratireoidiana"},
 N:{N0:"Sem linfonodo",N1a:"Central",N1b:"Lateral"}
 }
 
 };
 
 function updateOptions(){
-let s=site.value;
-T.innerHTML="";
-N.innerHTML="";
-for(let t in dados[s].T){T.innerHTML+=`<option>${t}</option>`}
-for(let n in dados[s].N){N.innerHTML+=`<option>${n}</option>`}
+let s = el("site").value;
+let tSelect = el("T");
+let nSelect = el("N");
+
+tSelect.innerHTML="";
+nSelect.innerHTML="";
+
+Object.keys(dados[s].T).forEach(function(t){
+tSelect.innerHTML += "<option value='"+t+"'>"+t+" - "+dados[s].T[t]+"</option>";
+});
+
+Object.keys(dados[s].N).forEach(function(n){
+nSelect.innerHTML += "<option value='"+n+"'>"+n+" - "+dados[s].N[n]+"</option>";
+});
 }
 
 function calc(){
 
-let s=site.value;
-let t=T.value;
-let n=N.value;
-let m=M.value;
-let subt=subtipo.value;
+let s = el("site").value;
+let t = el("T").value;
+let n = el("N").value;
+let m = el("M").value;
+let subtipo = el("subtipo").value;
+let ENE = el("ENE").value;
+let margem = el("margem").value;
 
-let estagio="I";
+let estagio = "I";
 
-if(m==="M1"){estagio="IV"}
+if(m==="M1"){
+estagio="IV";
+}
 else if(s==="orofaringe_hpv"){
-if(t==="T4"||n==="N3") estagio="III"
-else if(t==="T3"||n==="N2") estagio="II"
+if(t==="T4"||n==="N3") estagio="III";
+else if(t==="T3"||n==="N2") estagio="II";
+else estagio="I";
 }
 else{
-if(t==="T4"||n==="N3") estagio="IV"
-else if(t==="T3"||n==="N2") estagio="III"
-else if(t==="T2") estagio="II"
+if(t==="T4"||n==="N3") estagio="IV";
+else if(t==="T3"||n==="N2") estagio="III";
+else if(t==="T2") estagio="II";
+else estagio="I";
 }
 
 let conduta="";
 
 if(s==="tireoide"){
-if(subt==="dif") conduta="ATA: cirurgia ± radioiodo conforme risco"
-if(subt==="med") conduta="Total + esvaziamento central"
-if(subt==="ana") conduta="NGS + terapia alvo"
+if(subtipo==="dif"){
+conduta="ATA: diferenciado. Lobectomia em baixo risco; total ± radioiodo em risco maior.";
+}
+else if(subtipo==="med"){
+conduta="Medular: tireoidectomia total + esvaziamento central; avaliar RET.";
 }
 else{
-if(estagio==="I"||estagio==="II") conduta="Cirurgia ou RT"
-else if(estagio==="III") conduta="Cirurgia + adjuvância"
-else conduta="QT/RT ou sistêmico"
+conduta="Anaplásico: terapia alvo/imuno/RT; cirurgia se possível.";
+}
+}
+else{
+if(estagio==="I"||estagio==="II"){
+conduta="Cirurgia ou radioterapia.";
+}
+else if(estagio==="III"){
+conduta="Cirurgia + adjuvância ou QT/RT.";
+}
+else{
+conduta="QT/RT ou terapia sistêmica.";
+}
 }
 
-res.innerHTML=
+let alerta="";
+if(ENE==="sim"||margem==="positiva"){
+alerta="<br><br><span class='bad'>⚠ Alto risco → indicar QT/RT adjuvante</span>";
+}
+
+el("res").innerHTML=
 "<b>"+dados[s].nome+"</b><br><br>"+
+"<b>TNM:</b> "+t+" "+n+" "+m+"<br>"+
 "<b>Estágio:</b> "+estagio+"<br><br>"+
-"<b>Conduta:</b><br>"+conduta
+"<b>T:</b> "+dados[s].T[t]+"<br>"+
+"<b>N:</b> "+dados[s].N[n]+"<br><br>"+
+"<b>Conduta:</b><br>"+conduta+
+alerta+
+"<p class='small'>Base: AJCC + NCCN + ATA</p>";
+
 }
 
 function copiar(){
-navigator.clipboard.writeText(res.innerText)
-alert("Copiado!")
+calc();
+navigator.clipboard.writeText(el("res").innerText);
+alert("Copiado!");
 }
 
 updateOptions();
+calc();
 
 </script>
 
