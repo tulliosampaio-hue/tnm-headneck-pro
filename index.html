@@ -33,8 +33,14 @@ h2{margin-bottom:10px}
 <option value="tireoide">Tireoide</option>
 </select>
 
+<div id="boxSubtipo">
 <label>Subtipo (tireoide)</label>
 <select id="subtipo">
+<option value="dif">Papilífero/Folicular</option>
+<option value="med">Medular</option>
+<option value="ana">Anaplásico</option>
+</select>
+</div>
 <option value="dif">Papilífero/Folicular</option>
 <option value="med">Medular</option>
 <option value="ana">Anaplásico</option>
@@ -123,6 +129,30 @@ N:{N0:"Sem linfonodo",N1a:"Central",N1b:"Lateral"}
 };
 
 function updateOptions(){
+let s = el("site").value;
+let tSelect = el("T");
+let nSelect = el("N");
+let boxSubtipo = el("boxSubtipo");
+
+if(s==="tireoide"){
+boxSubtipo.style.display="block";
+} else {
+boxSubtipo.style.display="none";
+}
+
+tSelect.innerHTML="";
+nSelect.innerHTML="";
+
+Object.keys(dados[s].T).forEach(function(t){
+tSelect.innerHTML += "<option value='"+t+"'>"+t+" - "+dados[s].T[t]+"</option>";
+});
+
+Object.keys(dados[s].N).forEach(function(n){
+nSelect.innerHTML += "<option value='"+n+"'>"+n+" - "+dados[s].N[n]+"</option>";
+});
+
+calc();
+}
 let s = el("site").value;
 let tSelect = el("T");
 let nSelect = el("N");
