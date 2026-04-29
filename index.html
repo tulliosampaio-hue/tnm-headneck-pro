@@ -6,21 +6,24 @@
 <title>TNM H&N PRO</title>
 <style>
 body{font-family:Arial;background:#eef2f6;padding:15px;color:#111}
-h2{font-size:28px}
+h2{font-size:26px}
 .card{background:#fff;padding:15px;border-radius:14px;margin-bottom:12px}
 select,button{width:100%;padding:11px;margin-top:6px;border-radius:9px;border:1px solid #ccc;font-size:16px}
 button{background:#0b4f7a;color:#fff;font-weight:bold}
 .result{background:#d9edf7;padding:15px;border-radius:12px;margin-top:12px;line-height:1.35}
 label{display:block;margin-top:10px;font-weight:bold}
 .bad{color:#b00020;font-weight:bold}
+.risco{font-weight:bold;color:#0b4f7a}
 .small{font-size:13px;color:#444}
 </style>
 </head>
+
 <body>
 
 <h2>TNM Cabeça e Pescoço PRO</h2>
 
 <div class="card">
+
 <label>Sítio tumoral</label>
 <select id="site" onchange="updateOptions()">
 <option value="oral">Cavidade oral</option>
@@ -72,17 +75,20 @@ label{display:block;margin-top:10px;font-weight:bold}
 <button onclick="copiar()">Copiar para prontuário</button>
 
 <div class="result" id="res"></div>
+
 </div>
 
 <script>
 function el(id){return document.getElementById(id);}
 
 const dados={
+
 oral:{
 nome:"CEC Cavidade Oral",
 T:{
 T1:"≤2 cm e DOI ≤5 mm",
-T2:"≤2 cm com DOI 5–10 mm OU 2–4 cm com DOI ≤10 mm",
+T2a:"≤2 cm com DOI 5–10 mm",
+T2b:"2–4 cm com DOI ≤10 mm",
 T3:">4 cm OU DOI >10 mm",
 T4a:"Invade cortical óssea, seio maxilar, pele ou musculatura profunda",
 T4b:"Invade espaço mastigador, placas pterigoides, base do crânio ou envolve carótida"
@@ -186,7 +192,9 @@ N1:"Único ipsilateral ≤3 cm",
 N2a:"Único ipsilateral >3–6 cm",
 N2b:"Múltiplos ipsilaterais ≤6 cm",
 N2c:"Bilateral/contralateral ≤6 cm",
-N3:"Linfonodo >6 cm ou 
+N3:"Linfonodo >6 cm ou ENE+"
+}
+},
 
 tireoide:{
 nome:"Tumor de Tireoide",
@@ -195,25 +203,28 @@ T1a:"≤1 cm limitado à tireoide",
 T1b:">1–2 cm limitado à tireoide",
 T2:">2–4 cm limitado à tireoide",
 T3a:">4 cm limitado à tireoide",
-T3b:"Extensão extratireoidiana mínima (músculos infra-hióideos)",
+T3b:"Extensão extratireoidiana mínima para músculos infra-hióideos",
 T4a:"Invasão de laringe, traqueia, esôfago ou nervo recorrente",
-T4b:"Fáscia pré-vertebral ou envolve carótida/mediastino"
+T4b:"Fáscia pré-vertebral ou envolve carótida/vasos mediastinais"
 },
 N:{
 N0:"Sem linfonodo",
-N1a:"Compartimento central (VI/VII)",
-N1b:"Compartimento lateral ou mediastinal"
+N1a:"Compartimento central VI/VII",
+N1b:"Compartimento lateral cervical ou mediastinal superior"
 }
 },
-  
-melanoma:{
 
+melanoma:{
 nome:"Melanoma Cutâneo",
 T:{
-T1:"Breslow ≤1,0 mm",
-T2:"Breslow >1,0–2,0 mm",
-T3:"Breslow >2,0–4,0 mm",
-T4:"Breslow >4,0 mm"
+T1a:"Breslow ≤0,8 mm sem ulceração",
+T1b:"Breslow ≤0,8 mm com ulceração OU 0,8–1,0 mm",
+T2a:"Breslow 1–2 mm sem ulceração",
+T2b:"Breslow 1–2 mm com ulceração",
+T3a:"Breslow 2–4 mm sem ulceração",
+T3b:"Breslow 2–4 mm com ulceração",
+T4a:"Breslow >4 mm sem ulceração",
+T4b:"Breslow >4 mm com ulceração"
 },
 N:{
 N0:"Sem linfonodo",
@@ -282,48 +293,80 @@ return "I";
 
 if(s==="melanoma"){
 if(n!=="N0") return "III";
-if(t==="T3"||t==="T4") return "II";
+if(t==="T3a"||t==="T3b"||t==="T4a"||t==="T4b") return "II";
 return "I";
 }
 
 if(s==="tireoide"){
 if(t==="T4b") return "IVA/IVB";
 if(t==="T4a") return "III/IVA";
-if(t==="T3"||n!=="N0") return "II";
+if(t==="T3a"||t==="T3b"||n!=="N0") return "II";
 return "I";
 }
 
 if(t==="T4b"||n==="N3") return "IVB";
 if(t==="T4a"||t==="T4"||isN2(n)) return "IVA";
 if(t==="T3"||n==="N1") return "III";
-if(t==="T2") return "II";
+if(t==="T2"||t==="T2a"||t==="T2b") return "II";
 return "I";
 }
 
-function conduta(s,estagio,subtipo){
+function calcularRisco(s,estagio,ene,margem){
 if(s==="tireoide"){
-if(subtipo==="dif") return "ATA/NCCN: estratificar risco. Baixo risco: lobectomia pode ser suficiente. Intermediário/alto risco: tireoidectomia total ± radioiodo e supressão de TSH.";
-if(subtipo==="med") return "Medular: tireoidectomia total + esvaziamento central; avaliar calcitonina, CEA e RET.";
+if(estagio==="I") return "baixo";
+if(estagio==="II") return "intermediário";
+return "alto";
+}
+
+if(s==="melanoma"){
+if(estagio==="I") return "baixo";
+if(estagio==="II") return "intermediário";
+return "alto";
+}
+
+if(ene==="sim"||margem==="positiva") return "alto";
+if(estagio==="III"||estagio==="IVA"||estagio==="IVB"||estagio==="IVC") return "alto";
+if(estagio==="II") return "intermediário";
+return "baixo";
+}
+
+function condutaAvancada(s,estagio,risco,subtipo,t,n){
+if(s==="tireoide"){
+if(subtipo==="dif"){
+if(risco==="baixo") return "ATA/NCCN: carcinoma diferenciado de baixo risco. Lobectomia pode ser suficiente; seguimento com TSH, US e tireoglobulina conforme contexto.";
+if(risco==="intermediário") return "ATA/NCCN: risco intermediário. Considerar tireoidectomia total ± radioiodo; supressão de TSH individualizada.";
+return "ATA/NCCN: alto risco. Tireoidectomia total + radioiodo se indicado; supressão de TSH; avaliar doença estrutural e terapia sistêmica se refratário.";
+}
+if(subtipo==="med") return "Medular: tireoidectomia total + esvaziamento central; avaliar calcitonina, CEA, RET e necessidade de esvaziamento lateral.";
 return "Anaplásico: urgência oncológica; NGS/BRAF, terapia-alvo/imunoterapia/RT; cirurgia apenas se ressecável e útil para controle local.";
 }
 
 if(s==="melanoma"){
-if(estagio==="I") return "Excisão ampla; considerar linfonodo sentinela conforme Breslow/ulceração.";
-if(estagio==="II") return "Excisão ampla + considerar linfonodo sentinela; avaliar adjuvância em alto risco.";
+if(estagio==="I"){
+if(t==="T1b") return "Excisão ampla. Considerar linfonodo sentinela por T1b/ulceração.";
+return "Excisão ampla. Seguimento clínico; linfonodo sentinela geralmente não obrigatório em T1a.";
+}
+if(estagio==="II") return "Excisão ampla + considerar linfonodo sentinela; avaliar adjuvância se alto risco.";
 if(estagio==="III") return "Doença regional: estadiamento por imagem, cirurgia seletiva e imunoterapia/terapia-alvo adjuvante conforme mutação.";
 return "Metastático: imunoterapia anti-PD-1 ± anti-CTLA-4 ou BRAF/MEK se mutado.";
 }
 
 if(s==="pele"){
-if(estagio==="I"||estagio==="II") return "Exérese com margem adequada ou Mohs. Alto risco: considerar radioterapia adjuvante.";
-if(estagio==="III") return "Doença regional: cirurgia/esvaziamento quando indicado + RT. CEC avançado: anti-PD-1.";
-return "Avançado/metastático: CEC anti-PD-1; CBC avançado: inibidor Hedgehog ou anti-PD-1 conforme cenário.";
+if(risco==="baixo") return "Exérese com margem adequada ou Mohs conforme localização.";
+if(risco==="intermediário") return "Exérese ampla/Mohs; considerar RT adjuvante se alto risco local.";
+return "Avançado/regional: cirurgia/esvaziamento ± RT. CEC avançado: anti-PD-1; CBC avançado: Hedgehog ou anti-PD-1 conforme cenário.";
 }
 
 if(estagio==="I"||estagio==="II") return "Tratamento local: cirurgia ou radioterapia conforme sítio, função e ressecabilidade.";
-if(estagio==="III"||estagio==="IVA") return "Doença localmente avançada: cirurgia + adjuvância ou QT/RT definitiva conforme sítio e objetivo funcional.";
-if(estagio==="IVB") return "Muito avançado: avaliar ressecabilidade; QT/RT definitiva ou terapia sistêmica se irressecável.";
-return "Metastático: terapia sistêmica/imunoterapia ± quimioterapia e cuidados paliativos integrados.";
+
+if(estagio==="III"||estagio==="IVA"){
+if(risco==="alto") return "Doença localmente avançada/alto risco: cirurgia + adjuvância. Se ENE ou margem positiva, considerar QT/RT adjuvante.";
+return "Doença localmente avançada: QT/RT definitiva ou cirurgia + RT conforme sítio, função e ressecabilidade.";
+}
+
+if(estagio==="IVB") return "Muito avançado: avaliar ressecabilidade. Se irressecável, QT/RT definitiva ou terapia sistêmica conforme performance status.";
+
+return "Metastático: imunoterapia ± quimioterapia e cuidados paliativos integrados.";
 }
 
 function calc(){
@@ -336,7 +379,8 @@ let ene=el("ENE").value;
 let margem=el("margem").value;
 
 let estagio=calcularEstagio(s,t,n,m);
-let plano=conduta(s,estagio,subtipo);
+let risco=calcularRisco(s,estagio,ene,margem);
+let plano=condutaAvancada(s,estagio,risco,subtipo,t,n);
 
 let alerta="";
 if(ene==="sim"||margem==="positiva"){
@@ -349,7 +393,8 @@ alerta="<br><br><span class='bad'>⚠ Margem próxima: considerar RT adjuvante c
 el("res").innerHTML=
 "<b>"+dados[s].nome+"</b><br><br>"+
 "<b>TNM:</b> "+t+" "+n+" "+m+"<br>"+
-"<b>Estágio:</b> "+estagio+"<br><br>"+
+"<b>Estágio:</b> "+estagio+"<br>"+
+"<b>Risco:</b> <span class='risco'>"+risco.toUpperCase()+"</span><br><br>"+
 "<b>O que caracteriza o T:</b><br>"+dados[s].T[t]+"<br><br>"+
 "<b>O que caracteriza o N:</b><br>"+dados[s].N[n]+"<br><br>"+
 "<b>Conduta sugerida:</b><br>"+plano+
@@ -365,5 +410,6 @@ alert("Copiado para prontuário!");
 
 updateOptions();
 </script>
+
 </body>
 </html>
